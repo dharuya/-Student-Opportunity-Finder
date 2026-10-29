@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  name         String
+  passwordHash String
+  role         String             @default("STUDENT") // STUDENT | ADMIN
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  profile      StudentProfile?
+  savedItems   SavedOpportunity[]
+}
+
+model StudentProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationLevel String   @default("")
+  fieldOfStudy   String   @default("")
+  location       String   @default("")
+  skills         String   @default("")
+  interests      String   @default("")
+  careerGoal     String   @default("")
+  updatedAt      DateTime @updatedAt
+}
+
+model Opportunity {
+  id                 String             @id @default(cuid())
+  title              String
+  category           String // SCHOLARSHIP | INTERNSHIP | FREE_COURSE | SKILL_PROGRAM | GOVT_EXAM
+  provider           String
+  sourceType         String // GOVERNMENT | UNIVERSITY | PROVIDER
+  description        String
+  eligibility        String
+  benefits           String
+  requiredDocuments  String // newline separated
+  location           String
+  costType           String // FREE | PAID | STIPENDED | NOT_APPLICABLE
+  minEducation       String // CLASS_9_10 | CLASS_11_12 | UNDERGRADUATE | POSTGRADUATE | ANY
+  fields             String // comma separated fields of study
+  skillsRequired     String // comma separated skills
+  deadline           DateTime? // null => rolling / open enrollment
+  officialUrl        String
+  verificationStatus String             @default("UNVERIFIED") // VERIFIED | UNVERIFIED | EXPIRED
+  lastVerifiedAt     DateTime           @default(now())
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  savedBy            SavedOpportunity[]
+}
+
+model SavedOpportunity {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  savedAt       DateTime    @default(now())
+
+  @@unique([userId, opportunityId])
+}
